@@ -52,37 +52,38 @@ def intake_node(state: AgentState) -> dict:
 
 
 def classify_node(state: AgentState) -> dict:
-    """Classify the query into one of five routes using keyword heuristics.
+    """Classify the query into one of five routes.
 
-    Route priority (highest → lowest):
-      risky > error > tool > missing_info > simple
+    Strategy (controlled by USE_LLM_CLASSIFIER env var):
+    - LLM mode  : calls OpenAI gpt-4o-mini for semantic understanding —
+                  handles typos, synonyms, indirect phrasing correctly.
+    - Keyword mode (default/fallback): fast keyword heuristics, no API needed.
+                  Priority: risky > error > tool > missing_info > simple.
     """
-    query = state.get("query", "").lower()
-    words = query.split()
-    clean_words = [w.strip("?!.,;:") for w in words]
+    import os
+    from .llm_classifier import _keyword_fallback, classify_with_llm
 
-    route = Route.SIMPLE
-    risk_level = "low"
+    query = state.get("query", "")
+    use_llm = os.getenv("USE_LLM_CLASSIFIER", "false").lower() == "true"
+    model = os.getenv("LLM_MODEL", "gpt-4o-mini")
 
-    # Risky: destructive or external side-effects requiring approval
-    if any(kw in query for kw in ("refund", "delete", "send", "cancel", "transfer")):
-        route = Route.RISKY
-        risk_level = "high"
-    # Error: known failure keywords that should trigger retry loop
-    elif any(kw in query for kw in ("timeout", "fail", "failure", "error", "cannot recover")):
-        route = Route.ERROR
-    # Tool: requires data lookup from external system
-    elif any(kw in query for kw in ("status", "order", "lookup", "search", "find", "check")):
-        route = Route.TOOL
-    # Missing info: query is too short or uses vague pronouns without context
-    elif len(clean_words) < 5 and any(w in clean_words for w in ("it", "this", "that", "them")):
-        route = Route.MISSING_INFO
+    if use_llm:
+        route_value, reason = classify_with_llm(query, model)
+        mode = "llm"
+    else:
+        route_value, reason = _keyword_fallback(query)
+        mode = "keyword"
 
-    log.info("classify: route=%s risk=%s", route.value, risk_level)
+    risk_level = "high" if route_value == Route.RISKY.value else "low"
+    log.info("classify[%s]: route=%s risk=%s reason='%s'", mode, route_value, risk_level, reason)
     return {
-        "route": route.value,
+        "route": route_value,
         "risk_level": risk_level,
-        "events": [make_event("classify", "completed", f"route={route.value} risk={risk_level}")],
+        "events": [make_event(
+            "classify", "completed",
+            f"route={route_value} risk={risk_level}",
+            mode=mode, reason=reason,
+        )],
     }
 
 

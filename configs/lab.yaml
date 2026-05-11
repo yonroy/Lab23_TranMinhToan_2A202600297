@@ -1,3 +1,7 @@
 scenarios_path: data/sample/scenarios.jsonl
 checkpointer: memory
 report_path: reports/lab_report.md
+
+# LLM Classifier — set to true and provide OPENAI_API_KEY in .env to enable
+use_llm_classifier: false
+llm_model: gpt-4o-mini

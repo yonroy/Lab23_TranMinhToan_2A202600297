@@ -11,6 +11,9 @@ from typing import Annotated
 
 import typer
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv()  # load .env vào os.environ trước khi đọc LOG_LEVEL / OPENAI_API_KEY
 
 from .graph import build_graph
 from .metrics import MetricsReport, metric_from_state, summarize_metrics, write_metrics
