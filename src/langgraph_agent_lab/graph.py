@@ -21,26 +21,39 @@ from .nodes import (
     risky_action_node,
     tool_node,
 )
-from .routing import route_after_approval, route_after_classify, route_after_evaluate, route_after_retry
+from .routing import (
+    route_after_approval,
+    route_after_classify,
+    route_after_evaluate,
+    route_after_retry,
+)
 from .state import AgentState
 
 
-def build_graph(checkpointer: Any | None = None):
+def build_graph(checkpointer: Any | None = None) -> object:  # noqa: ANN401
     """Build and compile the LangGraph workflow.
 
-    TODO(student): review the architecture and modify nodes/edges only with a clear reason.
-    Required behaviors:
-    - intake -> classify (normalization + routing)
-    - classify routes to answer/tool/clarify/risky/retry
-    - tool -> evaluate creates the retry loop (slide: "done?" check)
-    - risky path requires approval before tool/action
-    - retry loop bounded by max_attempts -> dead_letter on exhaustion
-    - all paths eventually reach finalize -> END
+    Graph architecture:
+    - intake -> classify: normalize query and determine route
+    - classify -> [answer | tool | clarify | risky_action | retry]: five routes
+    - tool -> evaluate: "done?" check enabling the retry loop
+    - evaluate -> [answer | retry]: success continues, failure loops back
+    - retry -> [tool | dead_letter]: bounded by max_attempts
+    - risky_action -> approval -> [tool | clarify]: HITL gate
+    - all terminal paths reach finalize -> END
+
+    Termination guarantee:
+    - simple/missing_info: 1 pass, no loop
+    - tool: at most max_attempts iterations through the retry loop
+    - risky: approval gate then same bounded tool loop
+    - error: retry loop bounded by max_attempts -> dead_letter if exhausted
     """
     try:
         from langgraph.graph import END, START, StateGraph
     except Exception as exc:  # pragma: no cover - helpful install error
-        raise RuntimeError("LangGraph is required. Run: pip install -e '.[dev]' or pip install langgraph") from exc
+        raise RuntimeError(
+            "LangGraph is required. Run: pip install -e '.[dev]' or pip install langgraph"
+        ) from exc
 
     graph = StateGraph(AgentState)
     graph.add_node("intake", intake_node)

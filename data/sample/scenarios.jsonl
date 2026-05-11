@@ -5,3 +5,8 @@
 {"id":"S05_error","query":"Timeout failure while processing request","expected_route":"error","requires_approval":false,"should_retry":true,"tags":["retry"]}
 {"id":"S06_delete","query":"Delete customer account after support verification","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["hitl","destructive"]}
 {"id":"S07_dead_letter","query":"System failure cannot recover after multiple attempts","expected_route":"error","requires_approval":false,"should_retry":true,"max_attempts":1,"tags":["dead_letter","retry"]}
+{"id":"S08_priority","query":"Cancel the order 12345 immediately","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","priority_conflict"],"notes":"cancel beats order keyword — risky wins over tool"}
+{"id":"S09_max2","query":"Error processing transaction please retry","expected_route":"error","requires_approval":false,"should_retry":true,"max_attempts":2,"tags":["dead_letter","retry"],"notes":"max_attempts=2 → exactly 2 retries then dead_letter"}
+{"id":"S10_pii","query":"My account email user@example.com needs password reset","expected_route":"simple","requires_approval":false,"should_retry":false,"tags":["simple","pii"],"notes":"PII redacted but no risky/tool keywords → simple route"}
+{"id":"S11_vague","query":"What about that?","expected_route":"missing_info","requires_approval":false,"should_retry":false,"tags":["clarification","edge_case"],"notes":"3 words + that → missing_info even without it keyword"}
+{"id":"S12_transfer","query":"Transfer all funds from account 111 to account 222","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","destructive","hitl"],"notes":"transfer is high-risk financial action requiring approval"}

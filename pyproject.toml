@@ -40,6 +40,12 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP", "N", "ANN"]
 ignore = ["ANN101", "ANN102"]
 
+[tool.ruff.lint.per-file-ignores]
+# report.py contains markdown prose in strings — long lines are intentional
+"src/langgraph_agent_lab/report.py" = ["E501"]
+# test_graph_smoke.py uses conditional import after pytestmark (required pattern)
+"tests/test_graph_smoke.py" = ["E402", "E501"]
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-q --strict-markers"
