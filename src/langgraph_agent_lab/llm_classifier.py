@@ -27,8 +27,10 @@ Classify the user query into exactly one of these routes:
 - simple      : General question, FAQ, how-to. No data lookup or risky action needed.
 - tool        : Requires fetching data (order status, account info, balance lookup, search).
 - missing_info: Query is too vague or short to act on — clarification is needed.
-- risky       : Involves a destructive or irreversible action (refund, delete, cancel, \
-transfer money, send email on behalf of customer). Requires human approval. \
+- risky       : Involves a destructive, irreversible, or financial action that requires \
+human approval. This includes: refund (any query mentioning refund — even status checks — \
+because refunds involve financial approval), delete, cancel orders/accounts, \
+transfer money, send bulk/mass emails or notifications. \
 Password reset and account lookup are NOT risky — they are simple or tool routes.
 - error       : The user describes a technical failure, crash, timeout, or system error \
 that may need retry logic.
